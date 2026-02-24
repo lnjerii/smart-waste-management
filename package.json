@@ -1,0 +1,15 @@
+{
+  "name": "smart-waste-management",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/api",
+    "apps/optimizer"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:api": "npm --workspace apps/api run dev",
+    "dev:optimizer": "npm --workspace apps/optimizer run dev",
+    "build": "npm --workspace apps/optimizer run build && npm --workspace apps/api run build && npm --workspace apps/web run build"
+  }
+}

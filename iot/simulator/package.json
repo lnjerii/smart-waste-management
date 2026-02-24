@@ -1,0 +1,11 @@
+{
+  "name": "swms-iot-simulator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
