@@ -4,8 +4,8 @@
   --bg-2: #eaf4ff;
   --panel: #ffffff;
   --panel-2: #f5faff;
-  --text: #10233f;
-  --muted: #3f6088;
+  --text: #000000;
+  --muted: #111111;
   --line: #c7ddf4;
   --accent: #1f6fca;
   --accent-2: #4596f0;
@@ -179,7 +179,7 @@ button:active {
 
 .auth-shell {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   gap: 0;
   padding: 18px;
   overflow: hidden;
@@ -195,8 +195,9 @@ button:active {
 }
 
 .auth-visual {
-  flex: 1;
-  min-height: 520px;
+  width: 100%;
+  min-height: 280px;
+  max-height: 360px;
   border-radius: 18px;
   overflow: hidden;
   position: relative;
@@ -227,8 +228,9 @@ button:active {
 }
 
 .auth-form-panel {
-  flex: 1;
-  margin-left: 16px;
+  width: 100%;
+  margin-left: 0;
+  margin-top: 14px;
   border-radius: 18px;
   padding: 28px;
   display: flex;
@@ -372,15 +374,14 @@ button:active {
   }
 
   .auth-shell {
-    flex-direction: column;
     min-height: 68vh;
     padding: 10px;
     transform: none;
   }
 
   .auth-visual {
-    min-height: 260px;
-    max-height: 300px;
+    min-height: 220px;
+    max-height: 260px;
   }
 
   .auth-form-panel {

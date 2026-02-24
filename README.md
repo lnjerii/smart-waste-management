@@ -30,7 +30,7 @@ npm run dev:web
 
 4. Open web app and seed test users:
 - Visit `http://localhost:3000/login`
-- Click `Seed Admin`, `Seed Collector`, `Seed Citizen` once
+- Use `Create Account` for real role-based registration (admin/collector/citizen)
 
 ## Functional Modules Included
 
@@ -42,6 +42,7 @@ npm run dev:web
 - Citizen report submission and status lifecycle APIs
 - Live Leaflet map with color-coded bin markers
 - Optimized route generation via separate optimizer service
+- Advanced innovation module for prediction, CV events, recycling analytics, carbon tracking, WTE, rewards, emergency, transparency, bin health, business insights, chatbot/drone/blockchain/maintenance/heatmap
 
 ## Main API Endpoints
 
@@ -55,6 +56,21 @@ npm run dev:web
 - `POST /api/v1/reports`
 - `GET /api/v1/reports/my`
 - `GET /api/v1/reports` (admin/collector)
+
+## Advanced API Endpoints
+
+- `GET /api/v1/advanced/overview` (admin)
+- `GET /api/v1/advanced/heatmap` (admin/collector)
+- `GET /api/v1/advanced/transparency/public` (public)
+- `POST /api/v1/advanced/illegal-dumping` (admin/collector)
+- `POST /api/v1/advanced/recycling` (admin/collector)
+- `POST /api/v1/advanced/fuel` (admin/collector)
+- `POST /api/v1/advanced/rewards` (admin)
+- `POST /api/v1/advanced/emergency` (admin/collector/citizen)
+- `POST /api/v1/advanced/drone-scan` (admin)
+- `POST /api/v1/advanced/blockchain-trace` (admin)
+- `POST /api/v1/advanced/truck-telemetry` (admin/collector)
+- `POST /api/v1/advanced/chatbot` (all roles)
 
 ## Next Build Targets
 

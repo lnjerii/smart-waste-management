@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { telemetrySchema } from "../utils/validators.js";
 import { BinModel } from "../models/Bin.js";
+import { TelemetryRecordModel } from "../models/TelemetryRecord.js";
 import { evaluateAlerts } from "../services/alertService.js";
 import { io } from "../sockets/io.js";
 
@@ -31,6 +32,15 @@ export async function ingestTelemetry(req: Request, res: Response) {
     binId: payload.binId,
     fillLevel: payload.fillLevel,
     temperatureC: payload.temperatureC
+  });
+
+  await TelemetryRecordModel.create({
+    binId: payload.binId,
+    fillLevel: payload.fillLevel,
+    temperatureC: payload.temperatureC,
+    batteryLevel: payload.batteryLevel,
+    location: payload.location,
+    recordedAt: lastSeenAt
   });
 
   io.emit("bin.updated", bin);

@@ -7,6 +7,7 @@ import { authRouter } from "./routes/auth.js";
 import { routesRouter } from "./routes/routes.js";
 import { reportsRouter } from "./routes/reports.js";
 import { usersRouter } from "./routes/users.js";
+import { advancedRouter } from "./routes/advanced.js";
 
 export function createApp() {
   const app = express();
@@ -29,6 +30,7 @@ export function createApp() {
   app.use("/api/v1/routes", routesRouter);
   app.use("/api/v1/reports", reportsRouter);
   app.use("/api/v1/users", usersRouter);
+  app.use("/api/v1/advanced", advancedRouter);
 
   return app;
 }

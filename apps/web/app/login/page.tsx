@@ -146,13 +146,13 @@ export default function LoginPage() {
       <section className="auth-shell panel">
         <div className="auth-visual">
           <img
-            src="https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?auto=format&fit=crop&w=1200&q=80"
+            src="https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=1200&q=80"
             alt="Urban recycling and clean city concept"
           />
         </div>
         <div className="auth-form-panel">
           <div className="top-bar">
-            <h1>SWMS Access</h1>
+            <h1>Smart Waste Management System Access</h1>
           </div>
 
           <p>Use your real account credentials.</p>

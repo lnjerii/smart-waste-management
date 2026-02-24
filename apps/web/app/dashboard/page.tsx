@@ -31,6 +31,29 @@ type RouteSummary = {
   stops: Array<{ binId: string; status: string }>;
 };
 
+type AdvancedOverview = {
+  prediction: {
+    hotspots: Array<{ ward: string; activityScore: number }>;
+    peakDays: string[];
+    nextCriticalBins: Array<{ binId: string; etaHours: number; currentFill: number }>;
+  };
+  illegalDumping: { detectedLast30d: number; withNumberPlates: number };
+  recycling: { totalRecyclableKg: number; byType: Record<string, number>; recyclingRatePct: number };
+  carbon: { totalFuelLiters: number; co2Kg: number; reductionPct: number };
+  wasteToEnergy: { organicKg: number; potentialBiogasM3: number; potentialEnergyKWh: number };
+  incentives: { participants: number; totalPoints: number; leaderboard: Array<{ email: string; points: number }> };
+  emergency: { activeEvents: number; floodWarnings: number };
+  transparency: { cleanlinessIndex: number; missedCollections: number; avgRating: number };
+  binHealth: { healthyBins: number; lowBatteryBins: number; offlineBins: number; sensorFaultBins: number };
+  business: { analyticsClients: number; estMonthlyRevenueKes: number; subscriptionTiers: string[] };
+  nextLevel: {
+    chatbotQueries: number;
+    droneScans: number;
+    blockchainTraces: number;
+    truckMaintenanceRiskCount: number;
+  };
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<Overview>({ bins: [], activeAlerts: [] });
@@ -39,6 +62,7 @@ export default function DashboardPage() {
   const [collectors, setCollectors] = useState<Collector[]>([]);
   const [selectedCollector, setSelectedCollector] = useState("");
   const [routes, setRoutes] = useState<RouteSummary[]>([]);
+  const [advanced, setAdvanced] = useState<AdvancedOverview | null>(null);
 
   const token = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem("swms_token") : null), []);
 
@@ -96,6 +120,14 @@ export default function DashboardPage() {
     setRoutes(json.routes ?? []);
   }
 
+  async function loadAdvanced() {
+    if (!token) return;
+    const response = await authFetch("/api/v1/advanced/overview");
+    if (!response.ok) return;
+    const json = await response.json();
+    setAdvanced(json);
+  }
+
   async function generateRoute() {
     if (!token) return;
 
@@ -122,12 +154,14 @@ export default function DashboardPage() {
 
     await loadRoutes();
     await loadOverview();
+    await loadAdvanced();
   }
 
   useEffect(() => {
     loadOverview().catch(() => setError("Failed to load overview"));
     loadCollectors().catch(() => undefined);
     loadRoutes().catch(() => undefined);
+    loadAdvanced().catch(() => undefined);
 
     socket.on("bin.updated", () => {
       loadOverview().catch(() => undefined);
@@ -214,6 +248,74 @@ export default function DashboardPage() {
           ))}
         </ul>
       </section>
+
+      {advanced && (
+        <section className="panel" style={{ marginTop: 16 }}>
+          <h2>Competition Features Overview</h2>
+          <div className="card-grid">
+            <article className="metric-card">
+              <p>AI Prediction</p>
+              <p>Peak days: {advanced.prediction.peakDays.join(", ") || "N/A"}</p>
+              <p>Next critical bins: {advanced.prediction.nextCriticalBins.length}</p>
+            </article>
+            <article className="metric-card">
+              <p>Illegal Dumping CV</p>
+              <p>Events(30d): {advanced.illegalDumping.detectedLast30d}</p>
+              <p>Plates captured: {advanced.illegalDumping.withNumberPlates}</p>
+            </article>
+            <article className="metric-card">
+              <p>Recycling AI</p>
+              <p>Recyclable kg: {advanced.recycling.totalRecyclableKg}</p>
+              <p>Rate: {advanced.recycling.recyclingRatePct}%</p>
+            </article>
+            <article className="metric-card">
+              <p>Carbon Tracker</p>
+              <p>Fuel: {advanced.carbon.totalFuelLiters} L</p>
+              <p>CO2: {advanced.carbon.co2Kg} kg</p>
+            </article>
+            <article className="metric-card">
+              <p>Waste-to-Energy</p>
+              <p>Biogas: {advanced.wasteToEnergy.potentialBiogasM3} m3</p>
+              <p>Energy: {advanced.wasteToEnergy.potentialEnergyKWh} kWh</p>
+            </article>
+            <article className="metric-card">
+              <p>Incentives</p>
+              <p>Participants: {advanced.incentives.participants}</p>
+              <p>Total points: {advanced.incentives.totalPoints}</p>
+            </article>
+            <article className="metric-card">
+              <p>Emergency</p>
+              <p>Active events: {advanced.emergency.activeEvents}</p>
+              <p>Flood warnings: {advanced.emergency.floodWarnings}</p>
+            </article>
+            <article className="metric-card">
+              <p>Transparency</p>
+              <p>Cleanliness Index: {advanced.transparency.cleanlinessIndex}</p>
+              <p>Avg Rating: {advanced.transparency.avgRating}</p>
+            </article>
+            <article className="metric-card">
+              <p>Bin Health</p>
+              <p>Healthy: {advanced.binHealth.healthyBins}</p>
+              <p>Offline: {advanced.binHealth.offlineBins}</p>
+            </article>
+            <article className="metric-card">
+              <p>Business Model</p>
+              <p>Clients: {advanced.business.analyticsClients}</p>
+              <p>KES {advanced.business.estMonthlyRevenueKes}</p>
+            </article>
+            <article className="metric-card">
+              <p>Next-Level</p>
+              <p>Drone scans: {advanced.nextLevel.droneScans}</p>
+              <p>Blockchain traces: {advanced.nextLevel.blockchainTraces}</p>
+            </article>
+            <article className="metric-card">
+              <p>Predictive Maintenance</p>
+              <p>At-risk trucks: {advanced.nextLevel.truckMaintenanceRiskCount}</p>
+              <p>Chatbot queries: {advanced.nextLevel.chatbotQueries}</p>
+            </article>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
