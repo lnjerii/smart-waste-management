@@ -24,6 +24,24 @@ function hasLocation(bin: { location?: { lat?: number; lng?: number } | null }):
   return !!bin.location && typeof bin.location.lat === "number" && typeof bin.location.lng === "number";
 }
 
+function approxDistanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const dx = (a.lat - b.lat) * 111;
+  const dy = (a.lng - b.lng) * 111;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function fallbackPlan(input: OptimizeRequest) {
+  const ranked = [...input.bins].sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
+    return approxDistanceKm(input.depot, a.location) - approxDistanceKm(input.depot, b.location);
+  });
+
+  return {
+    algorithm: "fallback-priority-nearest",
+    stops: ranked.map((item) => item.binId)
+  };
+}
+
 export async function generateRoute(req: Request, res: Response) {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
 
@@ -49,17 +67,25 @@ export async function generateRoute(req: Request, res: Response) {
     }))
   };
 
-  const response = await fetch(`${env.optimizerUrl}/optimize`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  let plan: { algorithm: string; stops: string[] } | null = null;
 
-  if (!response.ok) {
-    return res.status(502).json({ error: "Optimizer service unavailable" });
+  try {
+    const response = await fetch(`${env.optimizerUrl}/optimize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      plan = (await response.json()) as { algorithm: string; stops: string[] };
+    }
+  } catch {
+    plan = null;
   }
 
-  const plan = (await response.json()) as { algorithm: string; stops: string[] };
+  if (!plan || !Array.isArray(plan.stops)) {
+    plan = fallbackPlan(payload);
+  }
 
   const stops = plan.stops.map((binId, index) => ({
     binId,

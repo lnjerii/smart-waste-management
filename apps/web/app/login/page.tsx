@@ -6,7 +6,7 @@ import { apiBaseUrl } from "../../lib/config";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">("register");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,6 +107,8 @@ export default function LoginPage() {
       return;
     }
 
+    setError("");
+    setInfo("");
     submitAuth(targetMode).catch(() => undefined);
   }
 
@@ -152,7 +154,7 @@ export default function LoginPage() {
         </div>
         <div className="auth-form-panel">
           <div className="top-bar">
-            <h1>Smart Waste Management System Access</h1>
+            <h1>Smart Waste Management Access</h1>
           </div>
 
           <p>Use your real account credentials.</p>

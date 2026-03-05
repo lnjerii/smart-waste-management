@@ -1,8 +1,8 @@
-﻿import "./globals.css";
+import "./globals.css";
 import "leaflet/dist/leaflet.css";
 
 export const metadata = {
-  title: "Smart Waste Management System"
+  title: "Smart Waste Management"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

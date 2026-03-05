@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { socket } from "../../lib/socket";
 import { apiBaseUrl } from "../../lib/config";
-
-const LiveMap = dynamic(() => import("../../components/LiveMap"), { ssr: false });
 
 type Bin = {
   binId: string;
@@ -97,7 +94,12 @@ export default function DashboardPage() {
       return;
     }
 
-    setData(await response.json());
+    const json = await response.json();
+    setData({
+      bins: Array.isArray(json?.bins) ? json.bins : [],
+      activeAlerts: Array.isArray(json?.activeAlerts) ? json.activeAlerts : [],
+      metrics: json?.metrics
+    });
   }
 
   async function loadCollectors() {
@@ -178,98 +180,131 @@ export default function DashboardPage() {
   }
 
   return (
-    <main>
-      <div className="top-bar">
-        <h1>Admin Dashboard</h1>
-      </div>
-      <div className="center-actions" style={{ marginBottom: 10 }}>
+    <main className="dashboard-shell">
+      <section className="panel dashboard-header">
+        <div>
+          <h1>Admin Operations Dashboard</h1>
+          <p className="dashboard-subtitle">
+            Live command center for routes, bin health, alerts, and advanced smart-city analytics.
+          </p>
+        </div>
         <button type="button" className="ghost" onClick={logout}>
           Log out
         </button>
-      </div>
+      </section>
 
       {error && <p className="error">{error}</p>}
       {info && <p style={{ textAlign: "center", color: "var(--accent)" }}>{info}</p>}
 
-      <div className="card-grid" style={{ marginBottom: 16 }}>
-        <article className="metric-card">
+      <section className="dashboard-stats">
+        <article className="panel stat-panel stat-total">
           <p>Total Bins</p>
           <div className="metric-value">{data.bins.length}</div>
         </article>
-        <article className="metric-card">
+        <article className="panel stat-panel stat-routes">
           <p>Open Routes</p>
           <div className="metric-value">{data.metrics?.openRoutes ?? 0}</div>
         </article>
-        <article className="metric-card">
+        <article className="panel stat-panel stat-reports">
           <p>Open Reports</p>
           <div className="metric-value">{data.metrics?.openReports ?? 0}</div>
         </article>
-      </div>
-
-      <div className="row">
-        <section className="panel">
-          <h2>Live Bin Map</h2>
-          <LiveMap bins={data.bins} />
-          <p>Legend: Green &lt;80%, Orange 80-89%, Red &gt;=90%</p>
-        </section>
-
-        <section className="panel">
-          <h2>Active Alerts ({data.activeAlerts.length})</h2>
-          <ul className="list">
-            {data.activeAlerts.map((alert, i) => (
-              <li key={i}>[{alert.level}] {alert.message}</li>
-            ))}
-          </ul>
-        </section>
-      </div>
-
-      <section className="panel" style={{ marginTop: 16 }}>
-        <h2>Route Assignment</h2>
-        <div className="center-actions">
-          <select value={selectedCollector} onChange={(e) => setSelectedCollector(e.target.value)} style={{ minWidth: 260, maxWidth: 380 }}>
-            <option value="">Unassigned route</option>
-            {collectors.map((collector) => (
-              <option key={collector._id} value={collector._id}>
-                {collector.name} ({collector.email})
-              </option>
-            ))}
-          </select>
-          <button onClick={generateRoute}>Generate Route</button>
-        </div>
+        <article className="panel stat-panel stat-alerts">
+          <p>Critical Alerts</p>
+          <div className="metric-value">
+            {data.activeAlerts.filter((a) => a.level === "critical").length}
+          </div>
+        </article>
       </section>
 
-      <section className="panel" style={{ marginTop: 16 }}>
-        <h2>Recent Routes ({routes.length})</h2>
-        <ul className="list">
-          {routes.map((route) => (
-            <li key={route._id}>
-              {route.status} | {route.algorithm} | stops: {route.stops.length} | collector: {route.collectorId?.name ?? "unassigned"}
-            </li>
-          ))}
-        </ul>
+      <section className="panel dashboard-alert-panel">
+        <div className="section-head">
+          <h2>Active Alerts ({data.activeAlerts.length})</h2>
+          <span className="badge danger">Priority</span>
+        </div>
+        {data.activeAlerts.length === 0 ? (
+          <p className="dashboard-empty">No active alerts.</p>
+        ) : (
+          <ul className="list dashboard-list">
+            {data.activeAlerts.map((alert, i) => (
+              <li key={i}>
+                <span className={`pill ${alert.level === "critical" ? "pill-danger" : "pill-info"}`}>
+                  {alert.level}
+                </span>{" "}
+                {alert.message}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="dashboard-main-grid">
+        <section className="panel">
+          <div className="section-head">
+            <h2>Route Assignment</h2>
+            <span className="badge">Dispatch</span>
+          </div>
+          <div className="dashboard-actions">
+            <select
+              className="dashboard-select"
+              value={selectedCollector}
+              onChange={(e) => setSelectedCollector(e.target.value)}
+            >
+              <option value="">Unassigned route</option>
+              {collectors.map((collector) => (
+                <option key={collector._id} value={collector._id}>
+                  {collector.name} ({collector.email})
+                </option>
+              ))}
+            </select>
+            <button onClick={generateRoute}>Generate Route</button>
+          </div>
+        </section>
+
+        <section className="panel">
+          <div className="section-head">
+            <h2>Recent Routes ({routes.length})</h2>
+            <span className="badge">History</span>
+          </div>
+          {routes.length === 0 ? (
+            <p className="dashboard-empty">No generated routes yet.</p>
+          ) : (
+            <ul className="list dashboard-list">
+              {routes.map((route) => (
+                <li key={route._id}>
+                  <span className="pill pill-info">{route.status}</span> {route.algorithm} | stops:{" "}
+                  {route.stops.length} | collector: {route.collectorId?.name ?? "unassigned"}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </section>
 
       {advanced && (
         <section className="panel" style={{ marginTop: 16 }}>
-          <h2>Competition Features Overview</h2>
-          <div className="card-grid">
+          <div className="section-head">
+            <h2>Advanced Smart Features</h2>
+            <span className="badge">Intelligence</span>
+          </div>
+          <div className="advanced-grid">
             <article className="metric-card">
               <p>AI Prediction</p>
-              <p>Peak days: {advanced.prediction.peakDays.join(", ") || "N/A"}</p>
-              <p>Next critical bins: {advanced.prediction.nextCriticalBins.length}</p>
+              <p>Peak: {advanced.prediction.peakDays.join(", ") || "N/A"}</p>
+              <p>Critical soon: {advanced.prediction.nextCriticalBins.length}</p>
             </article>
             <article className="metric-card">
-              <p>Illegal Dumping CV</p>
+              <p>Illegal Dumping</p>
               <p>Events(30d): {advanced.illegalDumping.detectedLast30d}</p>
-              <p>Plates captured: {advanced.illegalDumping.withNumberPlates}</p>
+              <p>Plate capture: {advanced.illegalDumping.withNumberPlates}</p>
             </article>
             <article className="metric-card">
-              <p>Recycling AI</p>
-              <p>Recyclable kg: {advanced.recycling.totalRecyclableKg}</p>
+              <p>Recycling</p>
+              <p>Kg: {advanced.recycling.totalRecyclableKg}</p>
               <p>Rate: {advanced.recycling.recyclingRatePct}%</p>
             </article>
             <article className="metric-card">
-              <p>Carbon Tracker</p>
+              <p>Carbon</p>
               <p>Fuel: {advanced.carbon.totalFuelLiters} L</p>
               <p>CO2: {advanced.carbon.co2Kg} kg</p>
             </article>
@@ -281,17 +316,17 @@ export default function DashboardPage() {
             <article className="metric-card">
               <p>Incentives</p>
               <p>Participants: {advanced.incentives.participants}</p>
-              <p>Total points: {advanced.incentives.totalPoints}</p>
+              <p>Points: {advanced.incentives.totalPoints}</p>
             </article>
             <article className="metric-card">
               <p>Emergency</p>
-              <p>Active events: {advanced.emergency.activeEvents}</p>
+              <p>Active: {advanced.emergency.activeEvents}</p>
               <p>Flood warnings: {advanced.emergency.floodWarnings}</p>
             </article>
             <article className="metric-card">
               <p>Transparency</p>
-              <p>Cleanliness Index: {advanced.transparency.cleanlinessIndex}</p>
-              <p>Avg Rating: {advanced.transparency.avgRating}</p>
+              <p>Index: {advanced.transparency.cleanlinessIndex}</p>
+              <p>Rating: {advanced.transparency.avgRating}</p>
             </article>
             <article className="metric-card">
               <p>Bin Health</p>
@@ -299,19 +334,19 @@ export default function DashboardPage() {
               <p>Offline: {advanced.binHealth.offlineBins}</p>
             </article>
             <article className="metric-card">
-              <p>Business Model</p>
+              <p>Business</p>
               <p>Clients: {advanced.business.analyticsClients}</p>
               <p>KES {advanced.business.estMonthlyRevenueKes}</p>
             </article>
             <article className="metric-card">
-              <p>Next-Level</p>
+              <p>Drone + Blockchain</p>
               <p>Drone scans: {advanced.nextLevel.droneScans}</p>
-              <p>Blockchain traces: {advanced.nextLevel.blockchainTraces}</p>
+              <p>Traces: {advanced.nextLevel.blockchainTraces}</p>
             </article>
             <article className="metric-card">
-              <p>Predictive Maintenance</p>
+              <p>Maintenance + Chatbot</p>
               <p>At-risk trucks: {advanced.nextLevel.truckMaintenanceRiskCount}</p>
-              <p>Chatbot queries: {advanced.nextLevel.chatbotQueries}</p>
+              <p>Queries: {advanced.nextLevel.chatbotQueries}</p>
             </article>
           </div>
         </section>

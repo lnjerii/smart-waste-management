@@ -76,9 +76,23 @@ export default function CollectorPage() {
     loadRoute().catch(() => setMessage("Failed to load route"));
   }, []);
 
+  const stopStats = useMemo(() => {
+    if (!route) return { total: 0, collected: 0, skipped: 0, damaged: 0, pending: 0, progress: 0 };
+    const total = route.stops.length;
+    const collected = route.stops.filter((s) => s.status === "collected").length;
+    const skipped = route.stops.filter((s) => s.status === "skipped").length;
+    const damaged = route.stops.filter((s) => s.status === "damaged").length;
+    const pending = route.stops.filter((s) => s.status === "pending").length;
+    const progress = total ? Math.round(((total - pending) / total) * 100) : 0;
+    return { total, collected, skipped, damaged, pending, progress };
+  }, [route]);
+
   function logout() {
     localStorage.removeItem("swms_token");
-    router.push("/login");
+    router.replace("/login");
+    if (typeof window !== "undefined") {
+      window.location.assign("/login");
+    }
   }
 
   return (
@@ -94,25 +108,56 @@ export default function CollectorPage() {
       {message && <p className="error">{message}</p>}
       {!route && <p>No route currently assigned.</p>}
       {route && (
-        <section className="panel">
-          <p>Route ID: {route._id}</p>
-          <p>Status: {route.status}</p>
-          <p>Algorithm: {route.algorithm}</p>
-          <ol className="list">
-            {route.stops
-              .sort((a, b) => a.order - b.order)
-              .map((stop) => (
-                <li key={stop.binId} style={{ marginBottom: 10 }}>
-                  {stop.binId} - {stop.status}
-                  <div className="center-actions" style={{ marginTop: 8, justifyContent: "flex-start" }}>
-                    <button onClick={() => updateStop(stop.binId, "collected")}>Collected</button>
-                    <button className="ghost" onClick={() => updateStop(stop.binId, "skipped")}>Skipped</button>
-                    <button className="ghost" onClick={() => updateStop(stop.binId, "damaged")}>Damaged</button>
-                  </div>
-                </li>
-              ))}
-          </ol>
-        </section>
+        <>
+          <section className="panel" style={{ marginBottom: 14 }}>
+            <h2>Route Overview</h2>
+            <div className="card-grid">
+              <article className="metric-card">
+                <p>Route ID</p>
+                <div className="metric-value" style={{ fontSize: "1rem" }}>{route._id.slice(-8)}</div>
+              </article>
+              <article className="metric-card">
+                <p>Status</p>
+                <div className="metric-value" style={{ fontSize: "1rem" }}>{route.status}</div>
+              </article>
+              <article className="metric-card">
+                <p>Algorithm</p>
+                <div className="metric-value" style={{ fontSize: "1rem" }}>{route.algorithm}</div>
+              </article>
+              <article className="metric-card">
+                <p>Progress</p>
+                <div className="metric-value">{stopStats.progress}%</div>
+              </article>
+              <article className="metric-card">
+                <p>Pending Stops</p>
+                <div className="metric-value">{stopStats.pending}</div>
+              </article>
+              <article className="metric-card">
+                <p>Collected Stops</p>
+                <div className="metric-value">{stopStats.collected}</div>
+              </article>
+            </div>
+          </section>
+
+          <section className="panel">
+            <h2>Assigned Stops</h2>
+            <div className="collector-stops">
+              {route.stops
+                .sort((a, b) => a.order - b.order)
+                .map((stop) => (
+                  <article key={stop.binId} className="collector-stop-card">
+                    <p><strong>Stop {stop.order}:</strong> {stop.binId}</p>
+                    <p>Status: <span className="collector-status">{stop.status}</span></p>
+                    <div className="center-actions" style={{ marginTop: 8, justifyContent: "flex-start" }}>
+                      <button onClick={() => updateStop(stop.binId, "collected")}>Collected</button>
+                      <button className="ghost" onClick={() => updateStop(stop.binId, "skipped")}>Skipped</button>
+                      <button className="ghost" onClick={() => updateStop(stop.binId, "damaged")}>Damaged</button>
+                    </div>
+                  </article>
+                ))}
+            </div>
+          </section>
+        </>
       )}
     </main>
   );

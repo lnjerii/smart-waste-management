@@ -25,9 +25,47 @@ export default function CitizenPage() {
 
   const token = useMemo(() => (typeof window !== "undefined" ? localStorage.getItem("swms_token") : null), []);
 
+  function extractApiError(data: any, fallback: string) {
+    if (!data) return fallback;
+    if (typeof data.error === "string" && data.error.trim().length > 0) {
+      const fieldErrors = data?.details?.fieldErrors;
+      if (fieldErrors && typeof fieldErrors === "object") {
+        const firstField = Object.keys(fieldErrors)[0];
+        const firstMessage = Array.isArray(fieldErrors[firstField]) ? fieldErrors[firstField][0] : undefined;
+        if (firstField && firstMessage) {
+          return `${data.error}: ${firstField} - ${firstMessage}`;
+        }
+      }
+      return data.error;
+    }
+    return fallback;
+  }
+
   async function submitReport(event: FormEvent) {
     event.preventDefault();
     setMessage("");
+
+    const cleanDescription = description.trim();
+    const parsedLat = Number(lat);
+    const parsedLng = Number(lng);
+    const cleanPhotoUrl = photoUrl.trim();
+    const cleanName = name.trim();
+    const cleanEmail = email.trim();
+
+    if (cleanDescription.length < 5) {
+      setMessage("Description must be at least 5 characters.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedLat) || !Number.isFinite(parsedLng)) {
+      setMessage("Latitude and Longitude must be valid numbers.");
+      return;
+    }
+
+    if (cleanPhotoUrl && !/^https?:\/\//i.test(cleanPhotoUrl)) {
+      setMessage("Photo URL must start with http:// or https://");
+      return;
+    }
 
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -37,17 +75,17 @@ export default function CitizenPage() {
       headers,
       body: JSON.stringify({
         type,
-        description,
-        location: { lat: Number(lat), lng: Number(lng) },
-        photoUrl: photoUrl || undefined,
-        reporterName: name || undefined,
-        reporterEmail: email || undefined
+        description: cleanDescription,
+        location: { lat: parsedLat, lng: parsedLng },
+        photoUrl: cleanPhotoUrl || undefined,
+        reporterName: cleanName || undefined,
+        reporterEmail: cleanEmail || undefined
       })
     });
 
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setMessage(json?.error ?? "Failed to submit report");
+      setMessage(extractApiError(json, "Failed to submit report"));
       return;
     }
 

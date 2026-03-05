@@ -21,7 +21,12 @@ npm install
 - Copy `apps/api/.env.example` to `apps/api/.env`
 - Copy `apps/web/.env.example` to `apps/web/.env.local`
 
-3. Run services in separate terminals:
+3. Run services:
+```bash
+npm run dev
+```
+
+Alternative (separate terminals):
 ```bash
 npm run dev:optimizer
 npm run dev:api
@@ -41,7 +46,7 @@ npm run dev:web
 - Persistent route plans with collector stop-status updates
 - Citizen report submission and status lifecycle APIs
 - Live Leaflet map with color-coded bin markers
-- Optimized route generation via separate optimizer service
+- Optimized route generation via separate optimizer service with API fallback when optimizer is offline
 - Advanced innovation module for prediction, CV events, recycling analytics, carbon tracking, WTE, rewards, emergency, transparency, bin health, business insights, chatbot/drone/blockchain/maintenance/heatmap
 
 ## Main API Endpoints

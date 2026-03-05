@@ -7,6 +7,7 @@
     "apps/optimizer"
   ],
   "scripts": {
+    "dev": "npm run dev --workspaces --if-present --parallel",
     "dev:web": "npm --workspace apps/web run dev",
     "dev:api": "npm --workspace apps/api run dev",
     "dev:optimizer": "npm --workspace apps/optimizer run dev",
